@@ -27,7 +27,10 @@ use smithay::{
         wayland_server::{Client, DisplayHandle},
     },
     utils::{DevPath, Size},
-    wayland::{dmabuf::DmabufGlobal, relative_pointer::RelativePointerManagerState},
+    wayland::{
+        dmabuf::DmabufGlobal, drm_syncobj::DrmSyncobjState,
+        relative_pointer::RelativePointerManagerState,
+    },
 };
 use tracing::{error, info, trace, warn};
 
@@ -158,6 +161,9 @@ fn init_libinput(
     })
     .map_err(|err| err.error)
     .context("Failed to initialize libinput event source")?;
+
+    // TODO check if main device supports syncobj eventfd?
+    DrmSyncobjState::new::<State>(&dh);
 
     // Create relative pointer global
     RelativePointerManagerState::new::<State>(&dh);
