@@ -31,6 +31,8 @@ pub struct CosmicCompConfig {
     pub focus_follows_cursor_delay: u64,
     /// Let X11 applications scale themselves
     pub descale_xwayland: bool,
+    /// The threshold before windows snap themselves to output edges
+    pub window_snap_threshold: u32,
 }
 
 impl Default for CosmicCompConfig {
@@ -60,6 +62,7 @@ impl Default for CosmicCompConfig {
             cursor_follows_focus: false,
             focus_follows_cursor_delay: 250,
             descale_xwayland: false,
+            window_snap_threshold: 0,
         }
     }
 }
