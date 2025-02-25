@@ -2,8 +2,8 @@
 
 use crate::{
     backend::render::{
-        element::AsGlowRenderer, BackdropShader, IndicatorShader, Key, Usage, ACTIVE_GROUP_COLOR,
-        GROUP_COLOR,
+        blur::Blurred, element::AsGlowRenderer, BackdropShader, IndicatorShader, Key, Usage,
+        ACTIVE_GROUP_COLOR, GROUP_COLOR,
     },
     shell::{
         element::{
@@ -47,6 +47,7 @@ use keyframe::{
 use smithay::{
     backend::renderer::{
         element::{
+            surface::WaylandSurfaceRenderElement,
             utils::{
                 constrain_render_elements, ConstrainAlign, ConstrainScaleBehavior,
                 RescaleRenderElement,
@@ -5287,8 +5288,10 @@ where
         let render_loc =
             (swap_geo.loc.as_logical() - window_geo.loc).to_physical_precise_round(output_scale);
 
+        let blur_state = window.blur();
+
         swap_elements.extend(
-            AsRenderElements::render_elements::<CosmicWindowRenderElement<R>>(
+            AsRenderElements::render_elements::<WaylandSurfaceRenderElement<R>>(
                 &window,
                 renderer,
                 render_loc,
@@ -5296,6 +5299,7 @@ where
                 1.0,
             )
             .into_iter()
+            .map(move |s| Blurred::new(s, blur_state.clone()).into())
             .map(|window| {
                 CosmicMappedRenderElement::GrabbedWindow(RescaleRenderElement::from_element(
                     window,

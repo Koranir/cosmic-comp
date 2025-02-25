@@ -1,5 +1,8 @@
 use crate::{
-    backend::render::cursor::CursorState,
+    backend::render::{
+        blur::{BlurCapableRenderer, Blurred},
+        cursor::CursorState,
+    },
     shell::{
         focus::target::PointerFocusTarget,
         grabs::{ReleaseMode, ResizeEdge},
@@ -324,11 +327,13 @@ impl CosmicWindow {
         };
 
         self.0.with_program(|p| {
+            let blur_state = p.window.blur();
             p.window
-                .popup_render_elements::<R, CosmicWindowRenderElement<R>>(
+                .popup_render_elements::<R, WaylandSurfaceRenderElement<R>>(
                     renderer, window_loc, scale, alpha,
                 )
                 .into_iter()
+                .map(|s| Blurred::new(s, blur_state.clone()).into())
                 .map(C::from)
                 .collect()
         })
@@ -357,9 +362,13 @@ impl CosmicWindow {
         let mut elements = Vec::new();
 
         elements.extend(self.0.with_program(|p| {
-            p.window.render_elements::<R, CosmicWindowRenderElement<R>>(
-                renderer, window_loc, scale, alpha,
-            )
+            let blur_state = p.window.blur();
+            p.window
+                .render_elements::<R, WaylandSurfaceRenderElement<R>>(
+                    renderer, window_loc, scale, alpha,
+                )
+                .into_iter()
+                .map(move |s| Blurred::new(s, blur_state.clone()).into())
         }));
 
         if has_ssd {
@@ -915,7 +924,7 @@ impl WaylandFocus for CosmicWindow {
 }
 
 render_elements! {
-    pub CosmicWindowRenderElement<R> where R: ImportAll + ImportMem;
+    pub CosmicWindowRenderElement<R> where R: ImportAll + ImportMem + BlurCapableRenderer;
     Header = MemoryRenderBufferRenderElement<R>,
-    Window = WaylandSurfaceRenderElement<R>,
+    Window = Blurred<WaylandSurfaceRenderElement<R>>,
 }

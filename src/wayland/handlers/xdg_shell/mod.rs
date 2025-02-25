@@ -53,6 +53,7 @@ impl XdgShellHandler for State {
             seat,
             fullscreen: None,
             maximized: false,
+            blur_state: Default::default(),
         });
         // We will position the window after the first commit, when we know its size hints
     }

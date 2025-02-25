@@ -356,6 +356,7 @@ impl XwmHandler for State {
             seat,
             fullscreen: None,
             maximized: false,
+            blur_state: Default::default(),
         });
     }
 

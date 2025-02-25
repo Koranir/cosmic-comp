@@ -79,9 +79,11 @@ where
     }
 }
 
+pub trait BlurCapableRenderer {}
+
 impl<R, E> RenderElement<R> for Blurred<E>
 where
-    R: Renderer + AsGlowRenderer,
+    R: Renderer + BlurCapableRenderer,
     E: RenderElement<R>,
 {
     fn draw(
@@ -102,3 +104,5 @@ where
         self.elem.draw(frame, src, dst, damage, opaque_regions)
     }
 }
+
+impl<T> BlurCapableRenderer for T where T: AsGlowRenderer {}

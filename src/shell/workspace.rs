@@ -1,5 +1,6 @@
 use crate::{
     backend::render::{
+        blur::{BlurCapableRenderer, Blurred},
         element::{AsGlowRenderer, FromGlesError},
         BackdropShader,
     },
@@ -1156,7 +1157,7 @@ impl Workspace {
         theme: &CosmicTheme,
     ) -> Result<Vec<WorkspaceRenderElement<R>>, OutputNotMapped>
     where
-        R: Renderer + ImportAll + ImportMem + AsGlowRenderer,
+        R: Renderer + ImportAll + ImportMem + AsGlowRenderer + BlurCapableRenderer,
         <R as Renderer>::TextureId: Send + Clone + 'static,
         CosmicMappedRenderElement<R>: RenderElement<R>,
         CosmicWindowRenderElement<R>: RenderElement<R>,
@@ -1245,19 +1246,26 @@ impl Workspace {
                 y: target_geo.size.h as f64 / bbox.size.h as f64,
             };
 
-            elements.extend(
-                fullscreen
-                    .surface
-                    .render_elements::<R, CosmicWindowRenderElement<R>>(
+            elements.extend({
+                let surface = &fullscreen.surface;
+                let blur_state = surface.blur();
+                surface
+                    .render_elements::<R, WaylandSurfaceRenderElement<R>>(
                         renderer,
                         render_loc,
                         output_scale.into(),
                         alpha,
                     )
                     .into_iter()
-                    .map(|elem| RescaleRenderElement::from_element(elem, render_loc, scale))
-                    .map(Into::into),
-            );
+                    .map(move |elem| {
+                        RescaleRenderElement::from_element(
+                            Blurred::new(elem, blur_state.clone()).into(),
+                            render_loc,
+                            scale,
+                        )
+                    })
+                    .map(Into::into)
+            });
         }
 
         if self
@@ -1359,7 +1367,7 @@ impl Workspace {
         theme: &CosmicTheme,
     ) -> Result<Vec<WorkspaceRenderElement<R>>, OutputNotMapped>
     where
-        R: Renderer + ImportAll + ImportMem + AsGlowRenderer,
+        R: Renderer + ImportAll + ImportMem + AsGlowRenderer + BlurCapableRenderer,
         <R as Renderer>::TextureId: Send + Clone + 'static,
         CosmicMappedRenderElement<R>: RenderElement<R>,
         CosmicWindowRenderElement<R>: RenderElement<R>,
@@ -1444,16 +1452,21 @@ impl Workspace {
                 .as_logical()
                 .to_physical_precise_round(output_scale);
 
+            let blur_state = fullscreen.surface.blur();
+
             elements.extend(
                 fullscreen
                     .surface
-                    .popup_render_elements::<R, CosmicWindowRenderElement<R>>(
+                    .popup_render_elements::<R, WaylandSurfaceRenderElement<R>>(
                         renderer,
                         render_loc,
                         output_scale.into(),
                         alpha,
                     )
                     .into_iter()
+                    .map(move |s| {
+                        CosmicWindowRenderElement::from(Blurred::new(s, blur_state.clone()))
+                    })
                     .map(Into::into),
             );
         }
@@ -1529,7 +1542,7 @@ where
 
 impl<R> Element for WorkspaceRenderElement<R>
 where
-    R: Renderer + ImportAll + ImportMem + AsGlowRenderer,
+    R: Renderer + ImportAll + ImportMem + AsGlowRenderer + BlurCapableRenderer,
     <R as Renderer>::TextureId: 'static,
 {
     fn id(&self) -> &smithay::backend::renderer::element::Id {
@@ -1629,7 +1642,7 @@ where
 
 impl<R> RenderElement<R> for WorkspaceRenderElement<R>
 where
-    R: Renderer + ImportAll + ImportMem + AsGlowRenderer,
+    R: Renderer + ImportAll + ImportMem + AsGlowRenderer + BlurCapableRenderer,
     <R as Renderer>::TextureId: 'static,
     <R as Renderer>::Error: FromGlesError,
 {

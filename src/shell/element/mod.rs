@@ -1,5 +1,8 @@
 use crate::{
-    backend::render::element::{AsGlowRenderer, FromGlesError},
+    backend::render::{
+        blur::BlurCapableRenderer,
+        element::{AsGlowRenderer, FromGlesError},
+    },
     state::State,
     utils::{iced::IcedElementInternal, prelude::*},
 };
@@ -1075,7 +1078,7 @@ where
 
 impl<R> Element for CosmicMappedRenderElement<R>
 where
-    R: Renderer + ImportAll + ImportMem,
+    R: Renderer + ImportAll + ImportMem + BlurCapableRenderer,
     <R as Renderer>::TextureId: 'static,
 {
     fn id(&self) -> &smithay::backend::renderer::element::Id {
@@ -1258,7 +1261,7 @@ where
 
 impl<R> RenderElement<R> for CosmicMappedRenderElement<R>
 where
-    R: Renderer + ImportAll + ImportMem + AsGlowRenderer,
+    R: Renderer + ImportAll + ImportMem + AsGlowRenderer + BlurCapableRenderer,
     <R as Renderer>::TextureId: 'static,
     <R as Renderer>::Error: FromGlesError,
 {

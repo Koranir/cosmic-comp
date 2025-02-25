@@ -381,7 +381,7 @@ where
         &'a self,
         group: &'a WorkspaceGroupHandle,
         client: &'a ObjectId,
-    ) -> impl Iterator<Item = &ZcosmicWorkspaceGroupHandleV1> + 'a {
+    ) -> impl Iterator<Item = &'a ZcosmicWorkspaceGroupHandleV1> + 'a {
         self.groups
             .iter()
             .filter(|g| g.id == group.id)
@@ -393,7 +393,7 @@ where
         &'a self,
         workspace: &'a WorkspaceHandle,
         client: &'a ObjectId,
-    ) -> impl Iterator<Item = &ZcosmicWorkspaceHandleV1> + 'a {
+    ) -> impl Iterator<Item = &'a ZcosmicWorkspaceHandleV1> + 'a {
         self.groups
             .iter()
             .find_map(|g| g.workspaces.iter().find(|w| w.id == workspace.id))

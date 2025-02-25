@@ -32,6 +32,7 @@ use crate::{
     },
 };
 
+use blur::BlurCapableRenderer;
 use cosmic::Theme;
 use element::FromGlesError;
 use smithay::{
@@ -556,7 +557,7 @@ pub fn output_elements<R>(
     _fps: Option<(&EguiState, &Timings)>,
 ) -> Result<Vec<CosmicElement<R>>, RenderError<R::Error>>
 where
-    R: Renderer + ImportAll + ImportMem + AsGlowRenderer,
+    R: Renderer + ImportAll + ImportMem + AsGlowRenderer + BlurCapableRenderer,
     <R as Renderer>::TextureId: Send + Clone + 'static,
     <R as Renderer>::Error: FromGlesError,
     CosmicMappedRenderElement<R>: RenderElement<R>,
@@ -650,7 +651,7 @@ pub fn workspace_elements<R>(
     element_filter: ElementFilter,
 ) -> Result<Vec<CosmicElement<R>>, RenderError<<R as Renderer>::Error>>
 where
-    R: Renderer + ImportAll + ImportMem + AsGlowRenderer,
+    R: Renderer + ImportAll + ImportMem + AsGlowRenderer + BlurCapableRenderer,
     <R as Renderer>::TextureId: Send + Clone + 'static,
     <R as Renderer>::Error: FromGlesError,
     CosmicMappedRenderElement<R>: RenderElement<R>,
@@ -751,7 +752,7 @@ where
         )
     };
 
-    render_input_order(
+    let _: () = render_input_order(
         &*shell,
         output,
         previous,
@@ -1009,7 +1010,8 @@ where
         + Bind<Target>
         + Offscreen<OffTarget>
         + Blit<Target>
-        + AsGlowRenderer,
+        + AsGlowRenderer
+        + BlurCapableRenderer,
     <R as Renderer>::TextureId: Send + Clone + 'static,
     <R as Renderer>::Error: FromGlesError,
     CosmicElement<R>: RenderElement<R>,
@@ -1173,7 +1175,8 @@ where
         + Bind<Dmabuf>
         + Bind<Target>
         + Offscreen<OffTarget>
-        + AsGlowRenderer,
+        + AsGlowRenderer
+        + BlurCapableRenderer,
     <R as Renderer>::TextureId: Send + Clone + 'static,
     <R as Renderer>::Error: FromGlesError,
     CosmicElement<R>: RenderElement<R>,

@@ -17,7 +17,7 @@ use smithay::{
     utils::{Buffer as BufferCoords, Logical, Physical, Point, Rectangle, Scale},
 };
 
-use super::{cursor::CursorRenderElement, GlMultiRenderer};
+use super::{blur::BlurCapableRenderer, cursor::CursorRenderElement, GlMultiRenderer};
 
 pub enum CosmicElement<R>
 where
@@ -44,7 +44,7 @@ where
 
 impl<R> Element for CosmicElement<R>
 where
-    R: AsGlowRenderer + Renderer + ImportAll + ImportMem,
+    R: AsGlowRenderer + Renderer + ImportAll + ImportMem + BlurCapableRenderer,
     <R as Renderer>::TextureId: 'static,
     CosmicMappedRenderElement<R>: RenderElement<R>,
 {
@@ -195,7 +195,7 @@ where
 
 impl<R> RenderElement<R> for CosmicElement<R>
 where
-    R: AsGlowRenderer + Renderer + ImportAll + ImportMem,
+    R: AsGlowRenderer + Renderer + ImportAll + ImportMem + BlurCapableRenderer,
     <R as Renderer>::TextureId: 'static,
     <R as Renderer>::Error: FromGlesError,
     CosmicMappedRenderElement<R>: RenderElement<R>,
@@ -285,7 +285,7 @@ where
 impl<R> From<CropRenderElement<RescaleRenderElement<WorkspaceRenderElement<R>>>>
     for CosmicElement<R>
 where
-    R: Renderer + ImportAll + ImportMem + AsGlowRenderer,
+    R: Renderer + ImportAll + ImportMem + AsGlowRenderer + BlurCapableRenderer,
     <R as Renderer>::TextureId: 'static,
     CosmicMappedRenderElement<R>: RenderElement<R>,
 {

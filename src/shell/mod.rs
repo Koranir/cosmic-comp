@@ -1,4 +1,5 @@
 use calloop::LoopHandle;
+use element::surface::BlurState;
 use focus::target::WindowGroup;
 use grabs::{MenuAlignment, SeatMoveGrabState};
 use indexmap::IndexMap;
@@ -238,6 +239,7 @@ pub struct PendingWindow {
     pub seat: Seat<State>,
     pub fullscreen: Option<Output>,
     pub maximized: bool,
+    pub blur_state: BlurState,
 }
 
 #[derive(Debug)]
@@ -2254,6 +2256,7 @@ impl Shell {
             seat,
             fullscreen: output,
             maximized: should_be_maximized,
+            blur_state,
         } = self.pending_windows.remove(pos);
 
         let parent_is_sticky = if let Some(toplevel) = window.0.toplevel() {
@@ -2413,6 +2416,8 @@ impl Shell {
             self.update_reactive_popups(mapped);
         }
 
+        mapped.active_window().set_blur(blur_state);
+
         new_target
     }
 
@@ -2517,6 +2522,7 @@ impl Shell {
                     seat: seat.clone(),
                     fullscreen: None,
                     maximized: false,
+                    blur_state: BlurState::default(),
                 });
                 return;
             }

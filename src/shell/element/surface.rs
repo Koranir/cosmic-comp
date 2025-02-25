@@ -217,6 +217,7 @@ impl CosmicSurface {
     }
 
     pub fn set_blur(&self, blur: BlurState) {
+        tracing::debug!("Set blur for window '{}': {blur:?}", self.title());
         *self
             .0
             .user_data()
