@@ -72,6 +72,7 @@ use smithay_egui::EguiState;
 
 pub mod animations;
 
+pub mod blur;
 pub mod cursor;
 pub mod element;
 use self::element::{AsGlowRenderer, CosmicElement};

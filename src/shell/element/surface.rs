@@ -95,12 +95,37 @@ struct Sticky(AtomicBool);
 #[derive(Default)]
 struct GlobalGeometry(Mutex<Option<Rectangle<i32, Global>>>);
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub enum BlurState {
     #[default]
     Unblurred,
     Blurred,
     PartiallyBlurred(RegionAttributes),
+}
+
+impl PartialEq for BlurState {
+    fn eq(&self, other: &Self) -> bool {
+        use BlurState::*;
+
+        match (self, other) {
+            (Unblurred, Unblurred) | (Blurred, Blurred) => true,
+            (PartiallyBlurred(lhs_attrs), PartiallyBlurred(rhs_attrs)) => {
+                // TODO: Properly to PartialEq checks.
+                _ = (lhs_attrs, rhs_attrs);
+                true
+            }
+            _ => false,
+        }
+    }
+}
+impl Eq for BlurState {}
+
+impl std::hash::Hash for BlurState {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        std::mem::discriminant(self).hash(state);
+
+        // TODO: Properly do a hash with RegionAttributes if needed
+    }
 }
 
 #[derive(Default)]
@@ -199,6 +224,16 @@ impl CosmicSurface {
             .0
             .lock()
             .unwrap() = blur;
+    }
+
+    pub fn blur(&self) -> BlurState {
+        self.0
+            .user_data()
+            .get_or_insert_threadsafe(Blur::default)
+            .0
+            .lock()
+            .unwrap()
+            .clone()
     }
 
     pub fn is_activated(&self, pending: bool) -> bool {
