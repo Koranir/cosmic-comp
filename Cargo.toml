@@ -50,6 +50,7 @@ tracing-journald = "0.3.0"
 tracing-subscriber = {version = "0.3.16", features = ["env-filter", "tracing-log"]}
 wayland-backend = "0.3.3"
 wayland-scanner = "0.31.1"
+wayland-protocols-plasma = {version = "0.3.3", default-features = false, features = ["server"]}
 xcursor = "0.3.3"
 xdg = "^2.1"
 xdg-user = "0.2.1"

@@ -845,6 +845,7 @@ dependencies = [
  "tracing-journald",
  "tracing-subscriber",
  "wayland-backend",
+ "wayland-protocols-plasma",
  "wayland-scanner",
  "xcursor",
  "xdg",
@@ -5746,6 +5747,7 @@ dependencies = [
  "wayland-client",
  "wayland-protocols",
  "wayland-scanner",
+ "wayland-server",
 ]
 
 [[package]]

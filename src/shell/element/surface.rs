@@ -39,7 +39,7 @@ use smithay::{
         user_data::UserDataMap, IsAlive, Logical, Physical, Point, Rectangle, Scale, Serial, Size,
     },
     wayland::{
-        compositor::{with_states, SurfaceData},
+        compositor::{with_states, RegionAttributes, SurfaceData},
         seat::WaylandFocus,
         shell::xdg::{SurfaceCachedState, ToplevelSurface, XdgToplevelSurfaceData},
     },
@@ -94,6 +94,17 @@ struct Sticky(AtomicBool);
 
 #[derive(Default)]
 struct GlobalGeometry(Mutex<Option<Rectangle<i32, Global>>>);
+
+#[derive(Debug, Default)]
+pub enum BlurState {
+    #[default]
+    Unblurred,
+    Blurred,
+    PartiallyBlurred(RegionAttributes),
+}
+
+#[derive(Default)]
+struct Blur(Mutex<BlurState>);
 
 impl CosmicSurface {
     pub fn title(&self) -> String {
@@ -178,6 +189,16 @@ impl CosmicSurface {
             }
             WindowSurface::X11(_surface) => {}
         }
+    }
+
+    pub fn set_blur(&self, blur: BlurState) {
+        *self
+            .0
+            .user_data()
+            .get_or_insert_threadsafe(Blur::default)
+            .0
+            .lock()
+            .unwrap() = blur;
     }
 
     pub fn is_activated(&self, pending: bool) -> bool {

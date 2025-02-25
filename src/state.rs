@@ -12,7 +12,7 @@ use crate::{
     shell::{grabs::SeatMoveGrabState, CosmicSurface, SeatExt, Shell},
     utils::prelude::OutputExt,
     wayland::{
-        handlers::screencopy::SessionHolder,
+        handlers::{kde_blur::KdeBlurManagerState, screencopy::SessionHolder},
         protocols::{
             a11y::A11yState,
             atspi::AtspiState,
@@ -223,6 +223,7 @@ pub struct Common {
     pub cursor_shape_manager_state: CursorShapeManagerState,
     pub wl_drm_state: WlDrmState<Option<DrmNode>>,
     pub viewporter_state: ViewporterState,
+    pub kde_blur_manager_state: KdeBlurManagerState,
     pub kde_decoration_state: KdeDecorationState,
     pub xdg_decoration_state: XdgDecorationState,
     pub overlap_notify_state: OverlapNotifyState,
@@ -526,6 +527,7 @@ impl State {
         let seat_state = SeatState::<Self>::new();
         let viewporter_state = ViewporterState::new::<Self>(dh);
         let wl_drm_state = WlDrmState::<Option<DrmNode>>::default();
+        let kde_blur_manager_state = KdeBlurManagerState::new::<Self>(dh);
         let kde_decoration_state = KdeDecorationState::new::<Self>(&dh, Mode::Client);
         let xdg_decoration_state = XdgDecorationState::new::<Self>(&dh);
         let session_lock_manager_state =
@@ -635,6 +637,7 @@ impl State {
                 data_control_state,
                 viewporter_state,
                 wl_drm_state,
+                kde_blur_manager_state,
                 kde_decoration_state,
                 xdg_decoration_state,
                 xdg_shell_state,
