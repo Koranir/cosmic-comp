@@ -12,7 +12,7 @@ use crate::{
     shell::{grabs::SeatMoveGrabState, CosmicSurface, SeatExt, Shell},
     utils::prelude::OutputExt,
     wayland::{
-        handlers::{kde_blur::KdeBlurManagerState, screencopy::SessionHolder},
+        handlers::{kde_blur::kde_blur::KdeBlurManagerState, screencopy::SessionHolder},
         protocols::{
             a11y::A11yState,
             atspi::AtspiState,

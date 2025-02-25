@@ -1,90 +1,97 @@
+use kde_blur::{KdeBlurData, KdeBlurHandler, KdeBlurManagerGlobalData, KdeBlurManagerState};
 use smithay::reexports::wayland_server::protocol::wl_region::WlRegion;
 use smithay::reexports::wayland_server::protocol::wl_surface::WlSurface;
-use smithay::reexports::wayland_server::{delegate_dispatch, delegate_global_dispatch, Dispatch};
-use smithay::reexports::wayland_server::{DisplayHandle, GlobalDispatch};
+use smithay::reexports::wayland_server::{delegate_dispatch, delegate_global_dispatch};
 use smithay::wayland::compositor::get_region_attributes;
-use tracing::trace;
-use wayland_backend::server::GlobalId;
 use wayland_protocols_plasma::blur::server::org_kde_kwin_blur::OrgKdeKwinBlur;
 use wayland_protocols_plasma::blur::server::org_kde_kwin_blur_manager::OrgKdeKwinBlurManager;
 
 use crate::shell::element::surface::BlurState;
 use crate::state::State;
 
-pub struct KdeBlurManagerGlobalData;
+pub mod kde_blur {
+    use smithay::reexports::wayland_server::{
+        protocol::{wl_region::WlRegion, wl_surface::WlSurface},
+        Dispatch, DisplayHandle, GlobalDispatch,
+    };
+    use wayland_backend::server::GlobalId;
+    use wayland_protocols_plasma::blur::server::{
+        org_kde_kwin_blur::OrgKdeKwinBlur, org_kde_kwin_blur_manager::OrgKdeKwinBlurManager,
+    };
 
-trait KdeBlurHandler {
-    /// A window has requested to be blurred.
-    /// By default the whole window should be blurred.
-    fn blurred(&mut self, surface: WlSurface);
-    /// A window has requested to be unblurred.
-    fn unblurred(&mut self, surface: WlSurface);
+    pub struct KdeBlurManagerGlobalData;
 
-    /// A window has set its blur bounds.
-    /// A no bounds means the whole window should blur.
-    fn blur_region(&mut self, surface: WlSurface, region: Option<WlRegion>);
-}
+    pub trait KdeBlurHandler {
+        /// A window has requested to be blurred.
+        /// By default the whole window should be blurred.
+        fn blurred(&mut self, surface: WlSurface);
+        /// A window has requested to be unblurred.
+        fn unblurred(&mut self, surface: WlSurface);
 
-pub struct KdeBlurData {
-    surface: WlSurface,
-}
-impl KdeBlurData {
-    pub fn new(surface: WlSurface) -> Self {
-        Self { surface }
+        /// A window has set its blur bounds.
+        /// A no bounds means the whole window should blur.
+        fn blur_region(&mut self, surface: WlSurface, region: Option<WlRegion>);
     }
 
-    pub fn surface(&self) -> WlSurface {
-        self.surface.clone()
+    pub struct KdeBlurData {
+        surface: WlSurface,
     }
-}
+    impl KdeBlurData {
+        pub fn new(surface: WlSurface) -> Self {
+            Self { surface }
+        }
 
-#[derive(Debug)]
-pub struct KdeBlurManagerState {
-    pub id: GlobalId,
-}
-impl KdeBlurManagerState {
-    pub fn new<D>(display: &DisplayHandle) -> Self
+        pub fn surface(&self) -> WlSurface {
+            self.surface.clone()
+        }
+    }
+
+    #[derive(Debug)]
+    pub struct KdeBlurManagerState {
+        pub id: GlobalId,
+    }
+    impl KdeBlurManagerState {
+        pub fn new<D>(display: &DisplayHandle) -> Self
+        where
+            D: GlobalDispatch<OrgKdeKwinBlurManager, KdeBlurManagerGlobalData> + 'static,
+        {
+            let id =
+                display.create_global::<D, OrgKdeKwinBlurManager, _>(1, KdeBlurManagerGlobalData);
+
+            Self { id }
+        }
+    }
+
+    impl<D> GlobalDispatch<OrgKdeKwinBlurManager, KdeBlurManagerGlobalData, D> for KdeBlurManagerState
     where
-        D: GlobalDispatch<OrgKdeKwinBlurManager, KdeBlurManagerGlobalData> + 'static,
+        D: Dispatch<OrgKdeKwinBlurManager, KdeBlurManagerGlobalData, D>,
     {
-        let id = display.create_global::<D, OrgKdeKwinBlurManager, _>(1, KdeBlurManagerGlobalData);
-
-        Self { id }
+        fn bind(
+            _state: &mut D,
+            _handle: &DisplayHandle,
+            _client: &smithay::reexports::wayland_server::Client,
+            resource: smithay::reexports::wayland_server::New<OrgKdeKwinBlurManager>,
+            _global_data: &KdeBlurManagerGlobalData,
+            data_init: &mut smithay::reexports::wayland_server::DataInit<'_, D>,
+        ) {
+            let _blur_manager = data_init.init(resource, KdeBlurManagerGlobalData);
+        }
     }
-}
 
-impl<D> GlobalDispatch<OrgKdeKwinBlurManager, KdeBlurManagerGlobalData, D> for KdeBlurManagerState
-where
-    D: Dispatch<OrgKdeKwinBlurManager, KdeBlurManagerGlobalData, D>,
-{
-    fn bind(
-        _state: &mut D,
-        _handle: &DisplayHandle,
-        _client: &smithay::reexports::wayland_server::Client,
-        resource: smithay::reexports::wayland_server::New<OrgKdeKwinBlurManager>,
-        _global_data: &KdeBlurManagerGlobalData,
-        data_init: &mut smithay::reexports::wayland_server::DataInit<'_, D>,
-    ) {
-        let _blur_manager = data_init.init(resource, KdeBlurManagerGlobalData);
-
-        trace!("Bound blur manager global");
-    }
-}
-
-impl<D> Dispatch<OrgKdeKwinBlurManager, KdeBlurManagerGlobalData, D> for KdeBlurManagerState
-where
-    D: Dispatch<OrgKdeKwinBlur, KdeBlurData, D> + KdeBlurHandler,
-{
-    fn request(
-        state: &mut D,
-        _client: &smithay::reexports::wayland_server::Client,
-        _resource: &OrgKdeKwinBlurManager,
-        request: <OrgKdeKwinBlurManager as smithay::reexports::wayland_server::Resource>::Request,
-        _data: &KdeBlurManagerGlobalData,
-        _dhandle: &DisplayHandle,
-        data_init: &mut smithay::reexports::wayland_server::DataInit<'_, D>,
-    ) {
-        match request {
+    impl<D> Dispatch<OrgKdeKwinBlurManager, KdeBlurManagerGlobalData, D> for KdeBlurManagerState
+    where
+        D: Dispatch<OrgKdeKwinBlur, KdeBlurData, D> + KdeBlurHandler,
+    {
+        fn request(
+            state: &mut D,
+            _client: &smithay::reexports::wayland_server::Client,
+            _resource: &OrgKdeKwinBlurManager,
+            request: <OrgKdeKwinBlurManager as smithay::reexports::wayland_server::Resource>::Request,
+            _data: &KdeBlurManagerGlobalData,
+            _dhandle: &DisplayHandle,
+            data_init: &mut smithay::reexports::wayland_server::DataInit<'_, D>,
+        ) {
+            match request {
             wayland_protocols_plasma::blur::server::org_kde_kwin_blur_manager::Request::Create { id, surface } => {
                 let _kwin_blur = data_init.init(id, KdeBlurData::new(surface.clone()));
 
@@ -93,33 +100,34 @@ where
             wayland_protocols_plasma::blur::server::org_kde_kwin_blur_manager::Request::Unset { surface: _ } => {},
             _ => unreachable!(),
         }
+        }
     }
-}
 
-impl<D> Dispatch<OrgKdeKwinBlur, KdeBlurData, D> for KdeBlurManagerState
-where
-    D: KdeBlurHandler,
-{
-    fn request(
-        state: &mut D,
-        _client: &smithay::reexports::wayland_server::Client,
-        _resource: &OrgKdeKwinBlur,
-        request: <OrgKdeKwinBlur as smithay::reexports::wayland_server::Resource>::Request,
-        data: &KdeBlurData,
-        _dhandle: &DisplayHandle,
-        _data_init: &mut smithay::reexports::wayland_server::DataInit<'_, D>,
-    ) {
-        match request {
-            wayland_protocols_plasma::blur::server::org_kde_kwin_blur::Request::Commit => {
-                // TODO: Figure out what this does
+    impl<D> Dispatch<OrgKdeKwinBlur, KdeBlurData, D> for KdeBlurManagerState
+    where
+        D: KdeBlurHandler,
+    {
+        fn request(
+            state: &mut D,
+            _client: &smithay::reexports::wayland_server::Client,
+            _resource: &OrgKdeKwinBlur,
+            request: <OrgKdeKwinBlur as smithay::reexports::wayland_server::Resource>::Request,
+            data: &KdeBlurData,
+            _dhandle: &DisplayHandle,
+            _data_init: &mut smithay::reexports::wayland_server::DataInit<'_, D>,
+        ) {
+            match request {
+                wayland_protocols_plasma::blur::server::org_kde_kwin_blur::Request::Commit => {
+                    // TODO: Figure out what this does
+                }
+                wayland_protocols_plasma::blur::server::org_kde_kwin_blur::Request::SetRegion {
+                    region,
+                } => state.blur_region(data.surface(), region),
+                wayland_protocols_plasma::blur::server::org_kde_kwin_blur::Request::Release => {
+                    state.unblurred(data.surface())
+                }
+                _ => unreachable!(),
             }
-            wayland_protocols_plasma::blur::server::org_kde_kwin_blur::Request::SetRegion {
-                region,
-            } => state.blur_region(data.surface(), region),
-            wayland_protocols_plasma::blur::server::org_kde_kwin_blur::Request::Release => {
-                state.unblurred(data.surface())
-            }
-            _ => unreachable!(),
         }
     }
 }
